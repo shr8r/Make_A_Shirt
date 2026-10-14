@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Design Your Own Shirt!</title>
+<style>
+:root{--bg:#fff4d6;--panel:#ffffff;--ink:#2b2350;--line:#2b2350;--tile:#f1ecff;--dark:#4a4470;--accent:#ff5d8f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#241d3d;--panel:#352c5c;--ink:#fff4d6;--line:#fff4d6;--tile:#4a3f7a;--dark:#201a38}}
+:root[data-theme="dark"]{--bg:#241d3d;--panel:#352c5c;--ink:#fff4d6;--line:#fff4d6;--tile:#4a3f7a;--dark:#201a38}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:"Chalkboard SE","Comic Sans MS","Trebuchet MS",sans-serif;padding:12px 12px 90px;user-select:none;-webkit-user-select:none}
+h1{margin:4px 0 14px;font-size:clamp(24px,5vw,40px);text-align:center}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer}
+#pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;max-width:900px;margin:0 auto}
+.shirtbtn{background:var(--panel);border:4px solid var(--line);border-radius:24px;padding:10px;font-size:20px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px}
+.shirtbtn:hover,.shirtbtn:focus-visible{transform:scale(1.05);border-color:var(--accent);outline:none}
+.shirtbtn svg{width:100%;max-width:120px}
+#design{display:flex;gap:14px;max-width:1300px;margin:0 auto;align-items:flex-start;justify-content:center}
+.col{background:var(--panel);border:4px solid var(--line);border-radius:22px;padding:10px}
+#colors{display:grid;grid-template-columns:repeat(2,44px);gap:8px}
+.sw{width:44px;height:44px;border-radius:50%;border:3px solid var(--line);padding:0}
+.sw.on{outline:5px solid var(--accent);outline-offset:2px}
+.mid{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+#stagewrap{width:min(100%,70vh);position:relative}
+#stage{position:relative;width:100%;aspect-ratio:300/320;border-radius:28px;background:var(--panel);border:4px dashed var(--line)}
+#stage.over{border-color:var(--accent);background:var(--tile)}
+#stage svg.shirt{position:absolute;inset:0;width:100%;height:100%}
+#layer{position:absolute;inset:0}
+.item{position:absolute;transform:translate(-50%,-50%);touch-action:none;cursor:grab}
+.item svg{width:100%;display:block;pointer-events:none}
+.item.sel{outline:3px dashed var(--accent);outline-offset:3px;border-radius:10px}
+.item.out{opacity:.35}
+.ghost{position:fixed;transform:translate(-50%,-50%);pointer-events:none;z-index:50;opacity:.9;filter:drop-shadow(0 6px 6px rgba(0,0,0,.3))}
+.ghost svg{width:100%;display:block}
+.bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.pill{background:var(--panel);border:3px solid var(--line);border-radius:999px;padding:8px 16px;font-weight:700;font-size:17px}
+.pill:disabled{opacity:.4;cursor:default}
+.hint{margin:0;font-size:15px;text-align:center;opacity:.85}
+#side{width:440px;flex:none;padding:16px;min-height:480px}
+#tabs{display:flex;gap:6px;margin-bottom:8px}
+#tabs button{flex:1;border:3px solid var(--line);background:var(--tile);border-radius:14px;padding:8px 2px;font-weight:700;font-size:16px}
+#tabs button.on{background:var(--accent);color:#fff}
+#pal{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;padding:4px 4px 12px}
+.tile{aspect-ratio:1;background:var(--tile);border:3px solid var(--line);border-radius:14px;padding:4px;touch-action:none;cursor:grab}
+.tile.dk{background:var(--dark)}
+.tile svg{width:100%;height:100%;display:block;pointer-events:none}
+#clear{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));background:#e63946;color:#fff;border:4px solid var(--line);border-radius:20px;padding:12px 20px;font-weight:700;font-size:19px;z-index:20}
+@media (max-width:720px){
+ #design{flex-direction:column;align-items:center}
+ #colors{grid-template-columns:repeat(6,40px)}
+ .sw{width:40px;height:40px}
+ #side{width:100%}
+ #pal{grid-template-columns:repeat(6,minmax(0,1fr))}
+ #stagewrap{width:min(100%,60vh)}
+}
+.sh{fill:rgba(0,0,0,.18)}.ln{fill:none;stroke:rgba(0,0,0,.3);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.wl{fill:none;stroke:rgba(255,255,255,.6);stroke-width:8;stroke-linecap:round}.bt{fill:rgba(0,0,0,.35)}
+</style>
+</head>
+<body>
+<h1>👕 Design Your Own Shirt!</h1>
+
+<section id="pick" aria-label="Pick a shirt"></section>
+
+<section id="design" hidden>
+  <div class="col" aria-label="Shirt colors"><div id="colors"></div></div>
+  <div class="mid">
+    <div class="bar"><button class="pill" id="back">⬅ Pick a different shirt</button></div>
+    <div id="stagewrap"><div id="stage"><svg class="shirt" id="shirtsvg" viewBox="0 0 300 320"></svg><div id="layer"></div></div></div>
+    <div class="bar"><button class="pill" id="smaller" disabled>➖ Smaller</button><button class="pill" id="bigger" disabled>➕ Bigger</button></div>
+    <p class="hint">Drag stickers onto your shirt. Drag one off the shirt to take it away.</p>
+  </div>
+  <div class="col" id="side"><div id="tabs"></div><div id="pal"></div></div>
+</section>
+
+<button id="clear">🗑 Start over</button>
+
+<script>
+const SHIRTS={
+ tee:{n:'T-Shirt',b:'M95 30 L60 45 L15 95 L50 125 L75 100 L75 290 L225 290 L225 100 L250 125 L285 95 L240 45 L205 30 Q150 75 95 30 Z',d:'<path class="ln" d="M95 30 Q150 75 205 30"/>'},
+ hoodie:{n:'Hoodie',b:'M100 50 L55 70 L20 250 L55 258 L80 140 L80 290 L220 290 L220 140 L245 258 L280 250 L245 70 L200 50 Q150 95 100 50Z',d:'<path class="sh" d="M105 50 Q150 12 195 50 Q150 95 105 50Z"/><path class="ln" d="M105 205 H195 L205 255 H95Z"/><path class="ln" d="M138 85 V130 M162 85 V130"/>'},
+ basketball:{n:'Basketball Jersey',b:'M95 20 L95 60 Q75 90 70 130 L70 290 L230 290 L230 130 Q225 90 205 60 L205 20 L180 20 Q150 75 120 20 Z',d:'<path class="ln" d="M95 60 Q75 90 70 130 M205 60 Q225 90 230 130"/><path class="wl" d="M72 270 H228"/>'},
+ football:{n:'Football Jersey',b:'M90 35 L40 55 L10 120 L50 140 L72 110 L72 290 L228 290 L228 110 L250 140 L290 120 L260 55 L210 35 L150 85 Z',d:'<path class="ln" d="M90 35 L150 85 L210 35"/><path class="wl" d="M22 108 L60 128 M278 108 L240 128"/>'},
+ baseball:{n:'Baseball Jersey',b:'M100 30 L55 48 L10 150 L45 165 L75 110 L75 290 L225 290 L225 110 L255 165 L290 150 L245 48 L200 30 Q150 60 100 30Z',d:'<path class="ln" d="M100 30 Q150 60 200 30 M150 52 V290"/><path class="wl" d="M22 125 L58 140 M278 125 L242 140"/><circle class="bt" cx="150" cy="95" r="5"/><circle class="bt" cx="150" cy="145" r="5"/><circle class="bt" cx="150" cy="195" r="5"/><circle class="bt" cx="150" cy="245" r="5"/>'},
+ dress:{n:'Dress',b:'M110 30 L100 70 L80 110 L40 290 L260 290 L220 110 L200 70 L190 30 Q150 70 110 30Z',d:'<path class="sh" d="M82 112 H218 L224 134 H76Z"/><path class="wl" d="M46 268 H254"/>'},
+ hockey:{n:'Hockey Jersey',b:'M100 45 L55 65 L20 250 L55 258 L80 140 L80 290 L220 290 L220 140 L245 258 L280 250 L245 65 L200 45 Q150 80 100 45Z',d:'<path class="ln" d="M100 45 Q150 80 200 45"/><path class="wl" d="M28 200 L66 207 M24 226 L60 233 M272 200 L234 207 M276 226 L240 233 M80 268 H220"/>'}
+};
+const COLORS=['#e63946','#ff8c1a','#ffd60a','#2dbe60','#14b8a6','#2f80ed','#1d3557','#8e44ad','#ff6fb5','#8b5a2b','#8d99ae','#222222'];
+const svg=(i,v='0 0 100 100')=>`<svg viewBox="${v}" xmlns="http://www.w3.org/2000/svg">${i}</svg>`;
+const rot=(n,el)=>Array.from({length:n},(_,k)=>`<g transform="rotate(${k*360/n} 50 50)">${el}</g>`).join('');
+const SHAPES={
+ star:svg('<polygon points="50,5 61,38 96,38 68,58 79,92 50,72 21,92 32,58 4,38 39,38" fill="#ffd400" stroke="#e69500" stroke-width="3" stroke-linejoin="round"/>'),
+ heart:svg('<path d="M50 90 C10 60 5 30 28 18 C40 12 50 22 50 30 C50 22 60 12 72 18 C95 30 90 60 50 90Z" fill="#ff4d8d" stroke="#c2185b" stroke-width="3"/>'),
+ bolt:svg('<polygon points="58,4 20,55 45,55 38,96 80,40 55,40" fill="#ffe600" stroke="#e69500" stroke-width="4" stroke-linejoin="round"/>'),
+ flower:svg(rot(5,'<ellipse cx="50" cy="25" rx="14" ry="21" fill="#ff6fb5" stroke="#c2185b" stroke-width="2"/>')+'<circle cx="50" cy="50" r="12" fill="#ffd400" stroke="#e69500" stroke-width="2"/>'),
+ butterfly:svg('<ellipse cx="30" cy="35" rx="24" ry="22" fill="#9b5de5" transform="rotate(-20 30 35)"/><ellipse cx="70" cy="35" rx="24" ry="22" fill="#9b5de5" transform="rotate(20 70 35)"/><ellipse cx="33" cy="68" rx="16" ry="17" fill="#f15bb5"/><ellipse cx="67" cy="68" rx="16" ry="17" fill="#f15bb5"/><rect x="46" y="22" width="8" height="62" rx="4" fill="#333"/><path d="M48 24 Q40 8 34 10 M52 24 Q60 8 66 10" stroke="#333" stroke-width="3" fill="none"/>'),
+ sun:svg(rot(8,'<line x1="50" y1="6" x2="50" y2="22" stroke="#ff9f1c" stroke-width="7" stroke-linecap="round"/>')+'<circle cx="50" cy="50" r="22" fill="#ffd400" stroke="#ff9f1c" stroke-width="3"/>'),
+ moon:svg('<path d="M65 8 A42 42 0 1 0 92 70 A34 34 0 1 1 65 8Z" fill="#ffd84d" stroke="#e69500" stroke-width="3"/>'),
+ smiley:svg('<circle cx="50" cy="50" r="42" fill="#ffd400" stroke="#e69500" stroke-width="3"/><circle cx="36" cy="40" r="6" fill="#333"/><circle cx="64" cy="40" r="6" fill="#333"/><path d="M30 58 Q50 82 70 58" stroke="#333" stroke-width="5" fill="none" stroke-linecap="round"/>'),
+ rainbow:svg('<path d="M8 80 A42 42 0 0 1 92 80" stroke="#e63946" stroke-width="9" fill="none"/><path d="M19 80 A31 31 0 0 1 81 80" stroke="#ffd400" stroke-width="9" fill="none"/><path d="M30 80 A20 20 0 0 1 70 80" stroke="#2f80ed" stroke-width="9" fill="none"/>'),
+ circle:svg('<circle cx="50" cy="50" r="40" fill="#2f80ed" stroke="#1d3557" stroke-width="3"/>'),
+ triangle:svg('<polygon points="50,10 92,86 8,86" fill="#2dbe60" stroke="#1b7a3d" stroke-width="3" stroke-linejoin="round"/>'),
+ diamond:svg('<polygon points="50,6 90,50 50,94 10,50" fill="#8e44ad" stroke="#5b2c75" stroke-width="3" stroke-linejoin="round"/>')
+};
+const txt=c=>svg(`<text x="50" y="80" text-anchor="middle" font-size="92" font-weight="900" font-family="Arial Black,Arial Rounded MT Bold,Arial,sans-serif" fill="#fff" stroke="rgba(0,0,0,.4)" stroke-width="4" paint-order="stroke" stroke-linejoin="round">${c}</text>`);
+const SETS={shapes:{label:'⭐ Shapes',items:Object.values(SHAPES),dk:false},letters:{label:'🔤 ABC',items:[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].map(txt),dk:true},numbers:{label:'🔢 123',items:[...'0123456789'].map(txt),dk:true}};
+
+const $=s=>document.querySelector(s);
+const stage=$('#stage'),layer=$('#layer');
+let shirt=null,color=COLORS[5],tab='shapes',sel=null,armed=false,armT;
+
+// shirt picker
+$('#pick').innerHTML=Object.entries(SHIRTS).map(([k,s])=>`<button class="shirtbtn" data-k="${k}"><svg viewBox="0 0 300 320"><path d="${s.b}" fill="#6ea8fe" stroke="#2b2350" stroke-width="5" stroke-linejoin="round"/>${s.d}</svg>${s.n}</button>`).join('');
+$('#pick').onclick=e=>{const b=e.target.closest('.shirtbtn');if(b){shirt=b.dataset.k;show();}};
+function show(){$('#pick').hidden=!!shirt;$('#design').hidden=!shirt;if(shirt)drawShirt();}
+function drawShirt(){const s=SHIRTS[shirt];$('#shirtsvg').innerHTML=`<path d="${s.b}" fill="${color}" stroke="#222" stroke-width="5" stroke-linejoin="round"/>${s.d}`;
+ document.querySelectorAll('.sw').forEach(w=>w.classList.toggle('on',w.dataset.c===color));}
+$('#back').onclick=()=>{shirt=null;show();};
+
+// colors
+$('#colors').innerHTML=COLORS.map(c=>`<button class="sw" data-c="${c}" style="background:${c}" aria-label="Color ${c}"></button>`).join('');
+$('#colors').onclick=e=>{const b=e.target.closest('.sw');if(b){color=b.dataset.c;drawShirt();}};
+
+// palette
+$('#tabs').innerHTML=Object.entries(SETS).map(([k,s])=>`<button data-t="${k}">${s.label}</button>`).join('');
+$('#tabs').onclick=e=>{const b=e.target.closest('button');if(b){tab=b.dataset.t;renderPal();}};
+function renderPal(){const s=SETS[tab];
+ document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+ $('#pal').innerHTML=s.items.map((h,i)=>`<div class="tile${s.dk?' dk':''}" data-i="${i}">${h}</div>`).join('');}
+$('#pal').addEventListener('pointerdown',e=>{
+ const t=e.target.closest('.tile');if(!t)return;e.preventDefault();
+ const html=SETS[tab].items[+t.dataset.i],sx=e.clientX,sy=e.clientY;let moved=false;
+ const g=document.createElement('div');g.className='ghost';g.innerHTML=html;g.style.width=Math.round(stage.offsetWidth*.24)+'px';
+ g.style.left=sx+'px';g.style.top=sy+'px';document.body.appendChild(g);
+ const mv=ev=>{if(Math.hypot(ev.clientX-sx,ev.clientY-sy)>6)moved=true;g.style.left=ev.clientX+'px';g.style.top=ev.clientY+'px';stage.classList.toggle('over',inStage(ev));};
+ const up=ev=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',up);
+  g.remove();stage.classList.remove('over');
+  if(!moved){addItem(html,50+(Math.random()*16-8),50+(Math.random()*16-8));}
+  else if(inStage(ev)){const p=pos(ev);addItem(html,p.x,p.y);}};
+ document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',up);
+});
+
+function pos(ev){const r=stage.getBoundingClientRect();return{x:(ev.clientX-r.left)/r.width*100,y:(ev.clientY-r.top)/r.height*100};}
+function inStage(ev){const p=pos(ev);return p.x>=0&&p.x<=100&&p.y>=0&&p.y<=100;}
+function select(el){if(sel)sel.classList.remove('sel');sel=el;if(el)el.classList.add('sel');$('#smaller').disabled=$('#bigger').disabled=!el;}
+function addItem(html,x,y){const el=document.createElement('div');el.className='item';el.innerHTML=html;
+ el.style.left=x+'%';el.style.top=y+'%';el.style.width='24%';layer.appendChild(el);select(el);
+ el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();select(el);layer.appendChild(el);
+  const mv=ev=>{const p=pos(ev);el.style.left=p.x+'%';el.style.top=p.y+'%';el.classList.toggle('out',!inStage(ev));};
+  const up=ev=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',up);
+   if(!inStage(ev)){el.remove();select(null);}};
+  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',up);});}
+stage.addEventListener('pointerdown',e=>{if(e.target===stage||e.target.closest('svg.shirt'))select(null);});
+const size=d=>{if(!sel)return;const w=Math.min(60,Math.max(8,parseFloat(sel.style.width)+d));sel.style.width=w+'%';};
+$('#bigger').onclick=()=>size(5);$('#smaller').onclick=()=>size(-5);
+
+// start over (tap twice)
+$('#clear').onclick=()=>{const b=$('#clear');
+ if(!armed){armed=true;b.textContent='Tap again to erase!';armT=setTimeout(()=>{armed=false;b.textContent='🗑 Start over';},3000);return;}
+ clearTimeout(armT);armed=false;b.textContent='🗑 Start over';layer.innerHTML='';select(null);color=COLORS[5];shirt=null;show();};
+
+renderPal();
+</script>
+</body>
+</html>
